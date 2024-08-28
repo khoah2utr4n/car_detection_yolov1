@@ -1,0 +1,6 @@
+pandas
+torchsummary
+opencv-python
+matplotlib
+tqdm
+scikit-learn
