@@ -48,21 +48,21 @@ class Yolov1(nn.Module):
         
         layers += [
             ConvBlock(in_channels=512, out_channels=512, kernel_size=1, padding=0, stride=1),
-            ConvBlock(in_channels=512, out_channels=1024, kernel_size=3, padding=1, stride=1),
+            ConvBlock(in_channels=512, out_channels=512, kernel_size=3, padding=1, stride=1),
             nn.MaxPool2d(kernel_size=2)
         ]
         
         for _ in range(2):
             layers += [
-                ConvBlock(in_channels=1024, out_channels=512, kernel_size=1, padding=0, stride=1),
-                ConvBlock(in_channels=512, out_channels=1024, kernel_size=3, padding=1, stride=1)
+                ConvBlock(in_channels=512, out_channels=512, kernel_size=1, padding=0, stride=1),
+                ConvBlock(in_channels=512, out_channels=512, kernel_size=3, padding=1, stride=1)
             ]
             
         layers += [
-            ConvBlock(in_channels=1024, out_channels=1024, kernel_size=3, padding=1, stride=1),
-            ConvBlock(in_channels=1024, out_channels=1024, kernel_size=3, padding=1, stride=2),
-            ConvBlock(in_channels=1024, out_channels=1024, kernel_size=3, padding=1, stride=1),
-            ConvBlock(in_channels=1024, out_channels=1024, kernel_size=3, padding=1, stride=1),
+            ConvBlock(in_channels=512, out_channels=512, kernel_size=3, padding=1, stride=1),
+            ConvBlock(in_channels=512, out_channels=512, kernel_size=3, padding=1, stride=2),
+            ConvBlock(in_channels=512, out_channels=512, kernel_size=3, padding=1, stride=1),
+            ConvBlock(in_channels=512, out_channels=512, kernel_size=3, padding=1, stride=1),
         ]
 
         return nn.Sequential(*layers)
@@ -71,10 +71,10 @@ class Yolov1(nn.Module):
         S, B = num_grids, num_boxes
         return nn.Sequential(
             nn.Flatten(),
-            nn.Linear(in_features=S*S*1024, out_features=496), # 4096 in paper
+            nn.Linear(in_features=S*S*512, out_features=512), # 4096 in paper
             # nn.Dropout(0.0),
             nn.LeakyReLU(negative_slope=0.1),
-            nn.Linear(496, S*S*(5*B))
+            nn.Linear(512, S*S*(5*B))
         )
 
 
