@@ -1,7 +1,5 @@
-import torch
 import torch.nn as nn
 from torchsummary import summary
-import config
 
 
 class ConvBlock(nn.Module):
@@ -67,20 +65,12 @@ class Yolov1(nn.Module):
 
         return nn.Sequential(*layers)
     
-    def _create_fcn_layers(self, num_grids, num_boxes):
-        S, B = num_grids, num_boxes
+    def _create_fcn_layers(self, num_grids, num_boxes, num_classes):
+        S, B, C = num_grids, num_boxes, num_classes
         return nn.Sequential(
             nn.Flatten(),
             nn.Linear(in_features=S*S*512, out_features=512), # 4096 in paper
             # nn.Dropout(0.0),
             nn.LeakyReLU(negative_slope=0.1),
-            nn.Linear(512, S*S*(5*B))
+            nn.Linear(512, S*S*(5*B + C))
         )
-
-
-if __name__ == '__main__':
-    model = Yolov1(in_channels=3, num_grids=7, num_boxes=2)
-    x = torch.rand(2, 3, 448, 448)
-    out = model(x)
-    print(out.shape)
-    summary(model.to(config.DEVICE), (3, 448, 448))

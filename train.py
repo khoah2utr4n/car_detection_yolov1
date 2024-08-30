@@ -27,7 +27,7 @@ def train_one_epoch(train_loader, model, optimizer, loss_fn):
     return mean_loss
 
 
-def train_fn(model, train_loader, val_loader, optimizer, loss_fn, cal_mAP_freq=20):
+def train_fn(model, train_loader, val_loader, optimizer, loss_fn, calc_mAP_freq=20):
     list_best_mAP = []
     mean_losses = []
     
@@ -37,7 +37,7 @@ def train_fn(model, train_loader, val_loader, optimizer, loss_fn, cal_mAP_freq=2
         mean_loss = train_one_epoch(train_loader, model, optimizer, loss_fn)
 
         
-        if (epoch+1) % cal_mAP_freq == 0:
+        if (epoch+1) % calc_mAP_freq == 0:
             print('Get boxes....')
             predicted_boxes, target_boxes = get_boxes(
                 val_loader, model, threshold=0.5, iou_threshold=0.5

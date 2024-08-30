@@ -56,7 +56,14 @@ def move_file(filenames, images_dir, images_dest_dir, labels_dir, labels_dest_di
             shutil.move(label_src, labels_dest_dir)
 
 def compute_IOU(predicted_boxes, true_boxes):
-    # x, y, w, h
+    """Calculates the Intersection Over Union between the predicted bounding boxes and the true bounding boxes.
+    
+        Args:
+            predicted_boxes (tensor): The predicted bounding boxes, with shaoe (num_boxes, 4). 
+            true_boxes (tensor): The true bounding boxes, with shape (num_boxes, 4). 
+        Returns:
+            tensor: The IOU values for each pair of predicted and true boxes 
+    """
     box1_x1 = predicted_boxes[..., 0:1] - predicted_boxes[..., 2:3] / 2
     box1_y1 = predicted_boxes[..., 1:2] - predicted_boxes[..., 3:4] / 2
     box1_x2 = predicted_boxes[..., 0:1] + predicted_boxes[..., 2:3] / 2
@@ -78,28 +85,38 @@ def compute_IOU(predicted_boxes, true_boxes):
     return intersection / union
 
 
-def compute_mAP(predicted_boxes, true_boxes, iou_threshold):
-    """
-    train_idx, x, y, w, h, conf, class
+def compute_mAP(predicted_boxes, true_boxes, iou_threshold, num_classes=1):
+    """Calculates mean Average Precision.
+    
+        Args:
+            predicted_boxes (list): List of predicted bounding boxes (num_boxes, 7)
+            .Each boxes have format: [train_idx, x, y, w, h, conf, class_prediction]
+            true_boxes (list): List of true bounding boxes (num_boxes, 7)
+            .Each boxes has same format as predicted_boxes
+            iou_threshold (float): threshold where predicted bboxes is correct
+            num_classes (int): number of classes
+        Return:
+            float: The mean Average Precision (mAP) value
     """
     epsilon = 1e-6
     average_precisions = []
-    detections = [box for box in predicted_boxes]
-    ground_truths = [box for box in true_boxes]
+    for c in range(num_classes):
+        detections = [box for box in predicted_boxes if box[6] == c]
+        ground_truths = [box for box in true_boxes if box[6] == c]
+        total_true_boxes = len(ground_truths)
+        if total_true_boxes == 0:
+            continue
 
-    # sort by box probabilities which is index 5
-    detections.sort(key=lambda x: x[5], reverse=True)
-    TP = torch.zeros(len(detections))
-    FP = torch.zeros(len(detections))
-    total_true_boxes = len(ground_truths)
-    if total_true_boxes > 0:
+        # sort by box probabilities which is index 5
+        detections.sort(key=lambda x: x[5], reverse=True)
+        TP = torch.zeros(len(detections))
+        FP = torch.zeros(len(detections))
         amount_boxes = Counter([gt[0] for gt in ground_truths])
         for key, value in amount_boxes.items():
             amount_boxes[key] = torch.zeros(value)
 
         for detection_idx, detection in enumerate(detections):
-
-            best_iou = 0
+            best_iou = 0 
             for gt_idx, gt in enumerate(ground_truths):
                 iou = compute_IOU(torch.tensor(detection), torch.tensor(gt))
                 if iou > best_iou:
@@ -115,21 +132,28 @@ def compute_mAP(predicted_boxes, true_boxes, iou_threshold):
             else:
                 FP[detection_idx] = 1
 
-            TP_cumsum = torch.cumsum(TP, dim=0)
-            FP_cumsum = torch.cumsum(FP, dim=0)
-            precisions = TP_cumsum / (TP_cumsum + FP_cumsum + epsilon)
-            recalls = TP_cumsum / (total_true_boxes + epsilon) 
-            precisions = torch.cat((torch.tensor([1]), precisions))
-            recalls = torch.cat((torch.tensor([0]), recalls))
-            # torch.trapz for numerical integration
-            average_precisions.append(torch.trapz(precisions, recalls))
+        TP_cumsum = torch.cumsum(TP, dim=0)
+        FP_cumsum = torch.cumsum(FP, dim=0)
+        precisions = TP_cumsum / (TP_cumsum + FP_cumsum + epsilon)
+        recalls = TP_cumsum / (total_true_boxes + epsilon) 
+        precisions = torch.cat((torch.tensor([1]), precisions))
+        recalls = torch.cat((torch.tensor([0]), recalls))
+        # torch.trapz for numerical integration
+        average_precisions.append(torch.trapz(precisions, recalls))
 
     return sum(average_precisions) / (len(average_precisions) + epsilon)
     
 
 def do_NMS(boxes, threshold, iou_threshold):
-    """
-    x,y,w,h,conf
+    """Do Non Max Surpression.
+
+        Args:
+            boxes (list): list of bounding boxes (num_boxes, 6).
+            .Each boxes have format: [x, y, w, h, conf, class_prediction]
+            threshold (float): The minimum confidence score for a prediction to be keep
+            iou_threshold (float): Threshold where predicted bboxes is correct
+        Return:
+            list: boxes after do NMS
     """
     boxes = [box for box in boxes if box[4] > threshold]
     boxes = sorted(boxes, key=lambda x: x[4], reverse=True)
@@ -138,7 +162,8 @@ def do_NMS(boxes, threshold, iou_threshold):
         chosen_box = boxes.pop(0)
         boxes = [
             box for box in boxes
-            if compute_IOU(
+            if box[5] != chosen_box[5]
+            or compute_IOU(
                 torch.tensor(box[0:4]), 
                 torch.tensor(chosen_box[0:4])
             ) < iou_threshold
@@ -147,20 +172,18 @@ def do_NMS(boxes, threshold, iou_threshold):
     return boxes_after_nms
 
 
-def get_bestbox(boxes, B, S=7):
-    """
-    x,y,w,h,conf
-    (N, S*S, 5B) -> (N, S*S, 5)
-    """
-    boxes = boxes.reshape(-1, S, S, 5*B)
+def get_bestbox(boxes, B, S=7, C=1):
+    boxes = boxes.reshape(boxes.shape[0], S, S, -1)
     box1 = boxes[..., 0:5]
     box2 = boxes[..., 5:10]
+    predicted_class = boxes[..., (5*B):(5*B+C)].argmax(-1).unsqueeze(-1)
     confs = torch.cat((box1[..., 4:5].unsqueeze(0), box2[..., 4:5].unsqueeze(0)), dim=0)
     best_conf, bestbox_idx = torch.max(confs, dim=0)
     bestbox = (1-bestbox_idx) * box1 + bestbox_idx * box2
     cell_indices = torch.arange(7).repeat(boxes.shape[0], 7, 1).unsqueeze(-1).to(config.DEVICE)
     bestbox[..., :1] = 1/S * (bestbox[..., :1] + cell_indices)
     bestbox[..., 1:2] = 1/S * (bestbox[..., 1:2] + cell_indices.permute(0, 2, 1, 3))
+    bestbox = torch.cat((bestbox, predicted_class), dim=-1)
     return bestbox
 
 

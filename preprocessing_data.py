@@ -45,9 +45,10 @@ if __name__ == '__main__':
     for i in range(len(annotation)):
         row = annotation.iloc[i]
         image_name, (x, y, w, h) = get_box_from_row(row)
+        class_idx = 0
         txt_filepath = os.path.join(config.TRAINING_LABELS_DIR, image_name[:-4]+'.txt')
         with open(txt_filepath, 'a') as f:           
-            f.write(f"{x} {y} {w} {h}\n")
+            f.write(f"{class_idx} {x} {y} {w} {h}\n")
             f.close() 
         
             

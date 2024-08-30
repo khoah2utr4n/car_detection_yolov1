@@ -1,9 +1,7 @@
-# Re-implement YOLOv1 model for car detection
-In this project, I re-implement a YOLOv1 ("you only look once") model for Car Object Detection task. 
- * 
- * The [Car Detection Dataset](https://www.kaggle.com/datasets/sshikamaru/car-object-detection) on Kaggle.
+# Re-Implementation YOLOv1 model using Pytorch for Car Object Detection
+This repository provides a Pytorch implementation of the YOLOv1 (You Only Look Once) object detection model for Car Object Detection task. Building upon the [YOLOv1 paper](https://ieeexplore.ieee.org/document/7780460/) and this [aladdinpersson repository](https://github.com/aladdinpersson/Machine-Learning-Collection). The dataset used in this repository is the [Car Detection Dataset](https://www.kaggle.com/datasets/sshikamaru/car-object-detection) on Kaggle.
 
-**Image**
+![example](https://github.com/user-attachments/assets/051670e2-4ea2-42a7-a304-163327836e30)
 
 ## Setup
 ### 1. Create a virtual environment 
@@ -14,7 +12,7 @@ In this project, I re-implement a YOLOv1 ("you only look once") model for Car Ob
 ### 2. Clone this repository and install packages
   * Clone this repository:
   ```
-  git clone https://github.com/khoah2utr4n/face_mask_detection_yolo.git
+  git clone https://github.com/khoah2utr4n/car_detection_yolov1.git
   ```
   * Install [PyTorch GPU/CPU](https://pytorch.org/get-started/locally/).
   * Install packages
@@ -22,35 +20,11 @@ In this project, I re-implement a YOLOv1 ("you only look once") model for Car Ob
   pip install -r requirements.txt
   ```
 ### 3. Dataset
-  * Download [Face Mask Detection Dataset](https://www.kaggle.com/datasets/andrewmvd/face-mask-detection), uncompress it and put `images` folder and `annotations` folder in the `datasets` folder.
-  * Prepocess the dataset:
+  * Download the [Car Detection Dataset](https://www.kaggle.com/datasets/sshikamaru/car-object-detection) and uncompress it to get the `data` folder.
+  * Preprocess the dataset:
   ```
   python preprocessing_data.py
   ```
-
 ## Usage
-### 1. Training
-  * The following command loads a pre-trained YOLOv8n model and trains it for 50 epochs:
-  ```
-  python train.py --epochs 50 --weights_path yolov8n.pt
-  ```
-  * To resume interrupted training, use:
-  ```
-  python train.py --weights_path <path/to/last.pt> --resume True
-  ```
-When finish the training, you will get the best weights of model through training `best.pt`
-
-### 2. Detection
-  * Detect masks in images or real-time camera using a Streamlit UI:
-  ```
-  streamlit run UI.py
-  ```
-  * **Upload Model Weights**
-    * To start, please upload the weights file of the model (file `.pt`) by select the checkbox `Upload new weights`.
-    * You can use your own weights or [download pre-trained weights](https://drive.google.com/file/d/1EjRwsiWIiLy60cKZLk_zM7c1SfrbueES/view?usp=sharing).
-  
-  * **Detection method**: Choose your preferred detection method:
-    * **Image upload**: Toggle "Using real-time camera" off to upload a picture and detect masks in it.
-    * **Real-time camera**: Toggle "Using real-time camera" on to activate mask detection from your webcam.
-
- 
+ * Configure Hyperparameters: Modify the `config.py` file to adjust training parameters like learning rate, batch size, and epochs.
+ * The `notebook.ipynb` notebook file shows how to use the model for training and making predictions. It also provides the code for the visualization training process and the model's predictions.
