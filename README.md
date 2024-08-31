@@ -1,7 +1,8 @@
 # Re-Implementation YOLOv1 model using Pytorch for Car Object Detection
 This repository provides a Pytorch implementation of the YOLOv1 (You Only Look Once) object detection model for Car Object Detection task. Building upon the [YOLOv1 paper](https://ieeexplore.ieee.org/document/7780460/) and this [aladdinpersson repository](https://github.com/aladdinpersson/Machine-Learning-Collection). The dataset used in this repository is the [Car Detection Dataset](https://www.kaggle.com/datasets/sshikamaru/car-object-detection) on Kaggle.
 
-![example](https://github.com/user-attachments/assets/051670e2-4ea2-42a7-a304-163327836e30)
+![example](https://github.com/user-attachments/assets/db850f1f-e25b-46bc-a763-473fda753042)
+
 
 ## Setup
 ### 1. Create a virtual environment 
